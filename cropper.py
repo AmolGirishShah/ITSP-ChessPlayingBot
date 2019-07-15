@@ -1,10 +1,8 @@
 '''
-This code find all the corners of the chessboard, crops all squares, warps perspective, and determines the
-chess position by determining the state of each square using the template_match_final file.
-Then the code compares two positions to output the move played by the human player in the UCI
-Chess Notation format. eg. "e2e4"
-'''
+This program is used to make datasets as it crops the squares of the chessboards and
+then stores it as an image. It is an subset of the Chessboard-Detection_Main.py file
 
+''''
 
 from __future__ import division
 import cv2
@@ -17,9 +15,12 @@ import template_match_final
 template_match_return_code = template_match_final.template_match_return_code
 code_to_text = template_match_final.code_to_text
 
-filenumber = '2'
-chess_img = cv2.imread('newphotos//empty_1_new.jpeg')  # Empty board image
-chess_img_final = cv2.imread('new_photos//test_2.jpeg') # Actual chess position to be analysed
+filenumber = "train_2"
+chess_img = cv2.imread('new_photos/train_empty_2.jpeg')  #Empty board image
+chess_img_final = cv2.imread('new_photos//' +filenumber+ '.jpeg') #Actual picture of board to be cropped
+# cv2.imshow("img", chess_img)
+# cv2.imshow("imgf", chess_img_final)
+# cv2.waitKey(0)
 
 gray = cv2.cvtColor(chess_img,cv2.COLOR_BGR2GRAY)
 corners = []
@@ -34,9 +35,7 @@ ret , corners = cv2.findChessboardCorners(gray,(7,7), None)
 if ret == False:
 	print('Did not find the internal corners of the chessboard')
 
-cv2.drawChessboardCorners(chess_img,(7,7),corners,ret)
-cv2.imshow("img2", chess_img)
-cv2.waitKey(0)
+# cv2.drawChessboardCorners(chess_img,(7,7),corners,ret)
 #
 # For example, printing 'corners' gives following result
 # [[[740.32825 197.17581]]
@@ -294,144 +293,23 @@ for row in range(8):
 		dim = (width, height)
 		# resize image
 		square_data[row][column] = cv2.resize(square_data[row][column], dim, interpolation = cv2.INTER_AREA)
-		cv2.imwrite(str(row)+str(column)+"_new"+ filenumber +".png" , square_data[row][column] )
+		cv2.imwrite(str(row)+str(column)+"_" +filenumber+ ".png" , square_data[row][column] )
+		code = template_match_return_code(str(row)+str(column)+"_" +filenumber+ ".png")
 		font = cv2.FONT_HERSHEY_SIMPLEX
-		code = template_match_return_code(str(row)+str(column)+"_new4.png")
 		cv2.putText(chess_img_final,code_to_text(code),(int(Corner_matrix[row+1][column][0]),int(Corner_matrix[row+1][column][1])), font, 1,(0,0,255),2,cv2.LINE_AA )
-		if code != 0:
-			piece_squares.append(code_to_text(code)+matrix_to_square(row,column))
-		#bottomLeftOrigin = True
-print(piece_squares)
-# show the original and warped images
-# cv2.namedWindow('Warped', cv2.WINDOW_NORMAL)
-# cv2.imshow('Warped', warped)
-# # Testing:
-# # dimensions = warped_1.shape
-# # print('Dimensions:')
-# # print(dimensions)
-#
-# cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-# cv2.imshow('image', chess_img)
-# cv2.namedWindow('image_final', cv2.WINDOW_NORMAL)
-# cv2.imshow('image_final', chess_img_final)
-# cv2.imwrite('Final_detected.png', chess_img_final)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-def insert_char(string,char):
-    return string[:1] + char + string[1:]
 
-#The following function checks whether the initial board position is correct or not
-def initialize_board(piece_squares):
-	print("in init_board")
-	for i in range(len(piece_squares)):
-		print(piece_squares[i])
-		initialize_fault = True
-		# p for pawn
-		# r for rook
-		# n for knight
-		# k for king
-		# q for queen
-		# b for bishop
-		print("[1:]:" + piece_squares[i][1:])
-		if piece_squares[i][2] == '2' or piece_squares[i][2] == '7':
-			piece_squares[i] = insert_char(piece_squares[i] , "p")
-			print("after add: " + piece_squares[i])
-			print("1")
-			initialize_fault = False
-		elif piece_squares[i][1:] == ('a1' or 'a8' or 'h1' or 'h8'):
-			piece_squares[i] = insert_char(piece_squares[i] , "r")
-			print("2")
-			initialize_fault = False
-		elif piece_squares[i][1:] == ('b1' or 'g1' or 'b8' or 'g8'):
-			piece_squares[i] = insert_char(piece_squares[i] , "n")
-			print("3")
-			initialize_fault = False
-		elif piece_squares[i][1:] == ('c1' or 'f1' or 'c8' or 'f8'):
-			piece_squares[i] = insert_char(piece_squares[i] , "b")
-			print("4")
-			initialize_fault = False
-		elif piece_squares[i][1:] == ('d1' or 'd8'):
-			piece_squares[i] = insert_char(piece_squares[i] , "q")
-			print("5")
-			initialize_fault = False
-		elif piece_squares[i][1:] == ('e1' or 'e8'):
-			piece_squares[i] = insert_char(piece_squares[i] , "k")
-			initialize_fault = False
-			print("6")
-		else:
-			print("Initialize Fault")
-			# return -1
-	print("In init_board_ out loop")
-	print(piece_squares)
-	return piece_squares
+#show the original and warped images
+cv2.namedWindow('Warped', cv2.WINDOW_NORMAL)
+cv2.imshow('Warped', warped)
+# Testing:
+# dimensions = warped_1.shape
+# print('Dimensions:')
+# print(dimensions)
 
-piece_squares = initialize_board(piece_squares)
-print(piece_squares)
-def compare_position_get_move(pos1,pos2):
-	changed_pieces_array = []
-	unchanged_bool = False
-	for piece1 in pos1:
-		unchanged_bool = False
-		for piece2 in pos2:
-			if piece1 == piece2:
-				unchanged_bool = True
-		if unchanged_bool == False:
-			changed_pieces_array.append(piece1)
-	for piece2 in pos2:
-		unchanged_bool = False
-		for piece1 in pos1:
-			if piece1 == piece2:
-				unchanged_bool = True
-		if unchanged_bool == False:
-			changed_pieces_array.append(piece2)
-
-	return changed_pieces_array
-
-pos2  = ['Rb0', 'Gc1', 'Ge1', 'Rf1', 'Gg1', 'Rh1', 'Gb2', 'Gd2', 'Ga3', 'Rb3', 'Rd3', 'Rf3', 'Gg3', 'Rh3', 'Rc4', 'Gd4', 'Gh4', 'Ga5', 'Gc5', 'Ge5', 'Rf5', 'Rc6', 'Rg6', 'Ga7', 'Rb7', 'Ge7', 'Gg7', 'Rh7', 'Rc8', 'Gd8', 'Rg8']
-position_diff = compare_position_get_move(piece_squares,pos2)
-print(position_diff)
-
-
-
-#The following function returns the move made by the human player by comparing two positions
-def return_move(pos1, pos2):
-	# Assuming that promotion only to queen
-	# 2: Normal type, promotion
-	# 3: Capture ,also enpassant
-	# 4: castling
-	position_diff = compare_position_get_move(piece_squares,pos2)
-	if len(position_diff) == 2:
-		# promotion case
-		if position_diff[0][1] == "p" and position_diff[0][3] == ("7" or "2") and position_diff[1][3] == ("1" or "8"):
-			return position_diff[0][2:]+ position_diff[1][2:] + "q"
-		else: #Normal type
-			return (position_diff[0][2:]+ position_diff[1][2:] )
-
-	elif len(position_diff) == 3:
-		if position_diff[1][2:] == position_diff[2][2:]:#Capture
-			return (position_diff[0][2:] + position_diff[1][2:3])
-		else: # enpassant
-			if position_diff[0][2:3] == position_diff[1][2:3] :
-				return (position_diff[0][2:] + position_diff[2][2:] )
-			else:
-				return (position_diff[0][2:] + position_diff[1][2:])
-
-	elif len(position_diff) == 4: #castling
-		if position_diff[0][1] == "K":
-			if positon_diff[2][1] == "K":
-				return 	(position_diff[0][2:] + positon_diff[2][2:] )
-			else:
-				return 	(position_diff[0][2:] + positon_diff[3][2:] )
-		elif position_diff[1][1] == "K":
-			if positon_diff[2][1] == "K":
-				return 	(position_diff[1][2:] + positon_diff[2][2:] )
-			else:
-				return 	(position_diff[1][2:] + positon_diff[3][2:] )
-		else:
-			print("wrong in len 4 type_of_move")
-			return -1
-	else:
-		print("Invalid len of positon_diff in type_of_move")
-		return -1
-
-print(return_move(piece_squares,pos2))
+cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+cv2.imshow('image', chess_img)
+cv2.namedWindow('image_final', cv2.WINDOW_NORMAL)
+cv2.imshow('image_final', chess_img_final)
+cv2.imwrite('Final_detected.png', chess_img_final)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
